@@ -24,6 +24,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/customers")
+@CrossOrigin("*")
 public class CustomerRestController {
 
     @Autowired
@@ -73,23 +74,34 @@ public class CustomerRestController {
     @PostMapping(value = "/create")
     @ResponseBody
     public ResponseEntity<Customer> saveCustomer(@RequestPart("file") MultipartFile file, @RequestPart("customer") String adString ) {
-        MultipartFile multipartFile = file;
-        String file1 = multipartFile.getOriginalFilename();
-        try {
-            Customer customer = new ObjectMapper().readValue(adString, Customer.class);
-            customer.setImage(file1);
-            customerService.save(customer);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+//        MultipartFile multipartFile = file;
+        if (!file.isEmpty()){
+            String file1 = file.getOriginalFilename();
+            try {
+                Customer customer = new ObjectMapper().readValue(adString, Customer.class);
+                customer.setImage(file1);
+                customerService.save(customer);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
 
 
-        String fileUpload = env.getProperty("upload.path");
-        try {
-            FileCopyUtils.copy(multipartFile.getBytes(), new File(fileUpload + file1));
-        } catch (IOException e) {
-            e.printStackTrace();
+            String fileUpload = env.getProperty("upload.path");
+            try {
+                FileCopyUtils.copy(file.getBytes(), new File(fileUpload + file1));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+        else {
+            try {
+                Customer customer = new ObjectMapper().readValue(adString, Customer.class);
+                customerService.save(customer);
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+        }
+
 //        Customer customer = new Customer(customerForm.getName(), customerForm.getEmail(), customerForm.getAddress(), file1);
 
         return new ResponseEntity<>( HttpStatus.CREATED);
